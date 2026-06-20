@@ -1,0 +1,6 @@
+pandas
+requests
+torch
+fastapi
+uvicorn
+scikit-learn
