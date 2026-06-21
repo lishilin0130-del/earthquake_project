@@ -42,45 +42,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-try:
-    mpl.font_manager._rebuild()
-except:
-    pass
+font_url = "https://raw.githubusercontent.com/googlefonts/noto-cjk/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
+font_path = "/tmp/NotoSansCJKsc-Regular.otf"
 
-# 设置中文字体（优先 Linux 可用字体）
-# 1. 尝试从系统路径寻找并注册中文字体
-font_paths = [
-    # Linux 下 Noto 字体常见安装路径
-    '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
-    '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
-    '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
-    '/usr/share/fonts/wqy-zenhei/wqy-zenhei.ttc',
-    # Mac 路径
-    '/System/Library/Fonts/STHeiti Light.ttc',
-    # Windows 路径（本地测试用）
-    'C:/Windows/Fonts/simhei.ttf',
-    'C:/Windows/Fonts/msyh.ttc',
-]
+if not os.path.exists(font_path):
+    try:
+        print("📥 正在从网络下载中文字体...")
+        urllib.request.urlretrieve(font_url, font_path)
+        print("✅ 字体下载完成")
+    except:
+        print("⚠️ 字体下载失败，使用备选方案")
 
-# 尝试找到第一个存在的字体文件
-found_font = None
-for path in font_paths:
-    if os.path.exists(path):
-        found_font = path
-        break
-
-if found_font:
-    # 如果找到了字体文件，直接注册给 Matplotlib
+if os.path.exists(font_path):
     from matplotlib.font_manager import FontProperties
-    font_prop = FontProperties(fname=found_font)
+    font_prop = FontProperties(fname=font_path)
     plt.rcParams['font.sans-serif'] = [font_prop.get_name()]
     plt.rcParams['axes.unicode_minus'] = False
-    print(f"✅ 字体加载成功: {found_font}")
+    print("✅ 网络字体加载成功")
 else:
-    # 如果没找到，fallback 方案
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
-    plt.rcParams['axes.unicode_minus'] = False
-    print("⚠️ 未找到中文字体，使用默认字体")
 
 # ============================================================
 # 禁用SSL警告
