@@ -3,18 +3,6 @@
 基于 Streamlit 框架，让数据分析变得可视化和可交互
 """
 
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import seaborn as sns
-import folium
-from streamlit_folium import folium_static
-from datetime import datetime, timedelta
-import requests
-import urllib3
-import os
-
 def get_region(lat, lon):
     if -35 <= lat <= 37 and -20 <= lon <= 52:
         return "非洲"
@@ -32,6 +20,18 @@ def get_region(lat, lon):
         return "南极洲"
     return "其他海域"
 
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import seaborn as sns
+import folium
+from streamlit_folium import folium_static
+from datetime import datetime, timedelta
+import requests
+import urllib3
+import os
+
 # ============================================================
 # 页面配置（只保留一次）
 # ============================================================
@@ -42,25 +42,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-font_url = "https://raw.githubusercontent.com/googlefonts/noto-cjk/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
-font_path = "/tmp/NotoSansCJKsc-Regular.otf"
+# ============================================================
+# 云端中文字体解决方案：强制重建缓存并设置字体
+# ============================================================
+try:
+    mpl.font_manager._rebuild()
+except:
+    pass
 
-if not os.path.exists(font_path):
-    try:
-        print("📥 正在从网络下载中文字体...")
-        urllib.request.urlretrieve(font_url, font_path)
-        print("✅ 字体下载完成")
-    except:
-        print("⚠️ 字体下载失败，使用备选方案")
-
-if os.path.exists(font_path):
-    from matplotlib.font_manager import FontProperties
-    font_prop = FontProperties(fname=font_path)
-    plt.rcParams['font.sans-serif'] = [font_prop.get_name()]
-    plt.rcParams['axes.unicode_minus'] = False
-    print("✅ 网络字体加载成功")
-else:
-    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+# 设置中文字体（优先 Linux 可用字体）
+plt.rcParams['font.sans-serif'] = [
+    'Noto Sans CJK SC',
+    'WenQuanYi Zen Hei',
+    'SimHei',
+    'Microsoft YaHei',
+    'DejaVu Sans'
+]
+plt.rcParams['axes.unicode_minus'] = False
 
 # ============================================================
 # 禁用SSL警告
