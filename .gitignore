@@ -1,6 +1,40 @@
 __pycache__/
-.venv/
-data/
-models/
 *.pyc
-/.pytest_cache/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Data files (太大了，不上传)
+data/*.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp

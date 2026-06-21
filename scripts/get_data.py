@@ -1,91 +1,119 @@
 """
-地震数据统计器 - 数据获取模块
-功能：从USGS获取最近30天的地震数据
+地震数据统计器 - 数据获取模块（支持长时间范围）
+功能：从USGS获取地震数据，支持超过30天的长时间范围
 """
 
 import pandas as pd
 import requests
 from datetime import datetime, timedelta
+import time
 
 print("=" * 60)
-print("🌍 地震数据统计器 - 数据获取")
+print("🌍 地震数据统计器 - 数据获取（分段版）")
 print("=" * 60)
 
-# 1. 从USGS获取地震数据
-print("\n📡 正在连接USGS地震数据库...")
-
-# USGS地震数据API
+# ============================================================
+# 配置参数
+# ============================================================
 url = "https://earthquake.usgs.gov/fdsnws/event/1/query"
 
-# 查询参数
-params = {
-    "format": "geojson",
-    "starttime": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-    "endtime": datetime.now().strftime("%Y-%m-%d"),
-    "minmagnitude": 2.5,      # 最小震级2.5
-    "orderby": "time"
-}
+# 用户配置
+total_days = 365  # 要获取的总天数
+min_magnitude = 2.5  # 最小震级
+segment_days = 30  # 每次获取的天数（30天最稳定）
 
-try:
-    response = requests.get(url, params=params, timeout=30)
-    data = response.json()
-    print(f"✅ 成功获取 {len(data['features'])} 条地震记录")
-except Exception as e:
-    print(f"❌ 数据获取失败: {e}")
-    exit()
+print(f"\n📋 配置信息:")
+print(f"   - 总天数: {total_days} 天")
+print(f"   - 最小震级: {min_magnitude}")
+print(f"   - 每段天数: {segment_days} 天")
 
-# 2. 解析数据
-print("\n📊 正在解析数据...")
+# ============================================================
+# 分段获取数据
+# ============================================================
+print("\n📡 正在分段获取数据...")
 
-records = []
-for feature in data['features']:
-    props = feature['properties']
-    geom = feature['geometry']['coordinates']
+all_records = []
+end_date = datetime.now()
+start_date = end_date - timedelta(days=total_days)
+
+# 计算需要分多少段
+num_segments = (total_days + segment_days - 1) // segment_days
+print(f"📊 共需 {num_segments} 次请求")
+
+for i in range(num_segments):
+    # 计算当前段的起止时间
+    segment_end = end_date - timedelta(days=i * segment_days)
+    segment_start = segment_end - timedelta(days=segment_days)
     
-    # 提取字段
-    mag = props.get('mag', None)
-    place = props.get('place', '未知地点')
-    time_ms = props.get('time', 0)
+    # 如果 segment_start 早于 start_date，则从 start_date 开始
+    if segment_start < start_date:
+        segment_start = start_date
     
-    # 时间转换：毫秒 → 可读日期
-    time_str = datetime.fromtimestamp(time_ms / 1000).strftime('%Y-%m-%d %H:%M:%S')
+    print(f"\n   📡 第 {i+1}/{num_segments} 段: {segment_start.strftime('%Y-%m-%d')} → {segment_end.strftime('%Y-%m-%d')}")
     
-    # 经纬度、深度 (经度, 纬度, 深度)
-    lon, lat, depth = geom[0], geom[1], geom[2]
-    
-    records.append({
-        '时间': time_str,
-        '纬度': round(lat, 4),
-        '经度': round(lon, 4),
-        '深度(km)': round(depth, 2),
-        '震级': mag,
-        '地点': place
-    })
+    params = {
+        "format": "geojson",
+        "starttime": segment_start.strftime("%Y-%m-%d"),
+        "endtime": segment_end.strftime("%Y-%m-%d"),
+        "minmagnitude": min_magnitude,
+        "orderby": "time"
+    }
 
-# 3. 转换为DataFrame并保存
-df = pd.DataFrame(records)
+    try:
+        response = requests.get(url, params=params, timeout=60)
+        data = response.json()
+        features = data.get('features', [])
+        print(f"      ✅ 获取到 {len(features)} 条记录")
 
-# 过滤掉震级为空的数据
-df = df[df['震级'].notna()]
-print(f"✅ 有效数据: {len(df)} 条")
+        # 解析数据
+        for feature in features:
+            props = feature['properties']
+            geom = feature['geometry']['coordinates']
+            mag = props.get('mag', None)
+            if mag is None or mag < min_magnitude:
+                continue
 
-# 保存为CSV
-df.to_csv('../data/earthquakes_raw.csv', index=False, encoding='utf-8-sig')
-print(f"💾 数据已保存到 earthquakes_raw.csv")
+            all_records.append({
+                '时间': datetime.fromtimestamp(props.get('time', 0) / 1000).strftime('%Y-%m-%d %H:%M:%S'),
+                '纬度': round(geom[1], 4),
+                '经度': round(geom[0], 4),
+                '深度(km)': round(geom[2], 2),
+                '震级': mag,
+                '地点': props.get('place', '未知地点')
+            })
 
-# 4. 数据概览
+        # 避免请求过快
+        time.sleep(0.5)
+
+    except Exception as e:
+        print(f"      ❌ 获取失败: {e}")
+        continue
+
+# ============================================================
+# 保存数据
+# ============================================================
 print("\n" + "=" * 60)
-print("📋 数据概览")
+print("📊 数据汇总")
 print("=" * 60)
-print(f"📅 时间范围: {df['时间'].min()} 至 {df['时间'].max()}")
-print(f"📊 总记录数: {len(df)}")
-print(f"⭐ 最大震级: {df['震级'].max():.1f}")
-print(f"⭐ 最小震级: {df['震级'].min():.1f}")
-print(f"📈 平均震级: {df['震级'].mean():.2f}")
-print(f"📉 最深地震: {df['深度(km)'].max():.1f} km")
-print(f"📈 最浅地震: {df['深度(km)'].min():.1f} km")
 
-print("\n📋 前5条数据预览:")
-print(df.head().to_string())
+df = pd.DataFrame(all_records)
+print(f"✅ 总共获取 {len(df)} 条地震记录")
+
+if not df.empty:
+    # 去重（按时间、经纬度、震级去重）
+    df = df.drop_duplicates(subset=['时间', '纬度', '经度', '震级'])
+    print(f"✅ 去重后剩余 {len(df)} 条记录")
+
+    # 保存
+    df.to_csv('../data/earthquakes_raw.csv', index=False, encoding='utf-8-sig')
+    print(f"💾 数据已保存到 earthquakes_raw.csv")
+
+    # 数据概览
+    print(f"\n📅 时间范围: {df['时间'].min()} 至 {df['时间'].max()}")
+    print(f"⭐ 最大震级: {df['震级'].max():.1f}")
+    print(f"⭐ 最小震级: {df['震级'].min():.1f}")
+    print(f"📈 平均震级: {df['震级'].mean():.2f}")
+else:
+    print("❌ 没有获取到任何数据")
 
 print("\n✅ 数据获取完成！")
