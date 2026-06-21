@@ -34,7 +34,7 @@ def get_region(lat, lon):
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # 👇 修复中文显示
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'Noto Sans CJK SC', 'SimHei', 'Microsoft YaHei']
 plt.rcParams['axes.unicode_minus'] = False
 
 # ============================================================
