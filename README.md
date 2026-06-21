@@ -1,4 +1,3 @@
-```markdown
 # 🌍 地震数据统计器
 
 基于 Python 和 USGS API 的地震数据获取、分析和可视化工具。
