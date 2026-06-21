@@ -111,23 +111,3 @@ python query_earthquakes.py
 
 MIT License
 ```
-
----
-
-## ✅ 操作步骤
-
-1. 复制上面的全部内容
-2. 打开 VS Code 中的 `README.md` 文件
-3. `Ctrl + A` 全选，`Ctrl + V` 粘贴
-4. `Ctrl + S` 保存
-5. 在终端执行：
-
-```bash
-git add README.md
-git commit -m "修复 README 格式"
-git push
-```
-
----
-
-刷新 GitHub 页面，应该能看到格式正常的 README 了！🚀
