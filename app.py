@@ -6,12 +6,14 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import seaborn as sns
 import folium
 from streamlit_folium import folium_static
 from datetime import datetime, timedelta
 import requests
 import urllib3
+import os
 
 def get_region(lat, lon):
     if -35 <= lat <= 37 and -20 <= lon <= 52:
@@ -30,34 +32,38 @@ def get_region(lat, lon):
         return "南极洲"
     return "其他海域"
 
-# 禁用SSL警告
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# ============================================================
+# 页面配置（只保留一次）
+# ============================================================
+st.set_page_config(
+    page_title="🌍 地震数据统计器",
+    page_icon="🌍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# 👇 修复中文显示
-plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'Noto Sans CJK SC', 'SimHei', 'Microsoft YaHei']
+# ============================================================
+# 云端中文字体解决方案：强制重建缓存并设置字体
+# ============================================================
+try:
+    mpl.font_manager._rebuild()
+except:
+    pass
+
+# 设置中文字体（优先 Linux 可用字体）
+plt.rcParams['font.sans-serif'] = [
+    'Noto Sans CJK SC',
+    'WenQuanYi Zen Hei',
+    'SimHei',
+    'Microsoft YaHei',
+    'DejaVu Sans'
+]
 plt.rcParams['axes.unicode_minus'] = False
 
 # ============================================================
-# 页面配置
+# 禁用SSL警告
 # ============================================================
-st.set_page_config(
-    page_title="🌍 地震数据统计器",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-import streamlit as st
-
-# ============================================================
-# 页面配置（放在文件最前面）
-# ============================================================
-st.set_page_config(
-    page_title="🌍 地震数据统计器",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ============================================================
 # 自定义 CSS 样式
