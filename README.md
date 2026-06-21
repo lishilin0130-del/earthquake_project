@@ -45,7 +45,9 @@ text
 
 ### 1. 克隆项目
 
+## 快速开始
 ```bash
+<<<<<<< HEAD
 git clone https://github.com/lishilin0130-del/earthquake_project.git
 cd earthquake_project
 2. 创建虚拟环境
@@ -90,3 +92,8 @@ Shilin Li (lishilin0130-del)
 
 📝 许可证
 MIT License
+=======
+pip install -r requirements.txt
+cd scripts
+python get_data.py
+>>>>>>> e6f5d71a034dd018ef68fcc75582e39311a49f13
